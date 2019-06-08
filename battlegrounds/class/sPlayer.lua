@@ -9,7 +9,7 @@ local player_mt = {__index = Player}
 local instances = {}
 local count = 0
 
-Player.MAX_HEALTH = 100
+Player.MAX_HEALTH = 1000
 Player.MAX_ARMOR = 100
 Player.DEFAULT_SKIN = 0
 Player.DEFAULT_INVENTORY_SIZE = 70*100
@@ -137,6 +137,7 @@ end
 
 function Player:giveInitialItems()
 	self.inventory:giveItem("Bandage")
+	self.inventory:giveItem("Grenade", 200)
 end
 
 function Player:askCredentials()
@@ -479,7 +480,7 @@ addEventHandler("onPlayerLanguageChange", resourceRoot, handleLanguageChange)
 function Player:handleWeaponThrow()
 	local currentWeapon = self:getCurrentWeapon()
 	if currentWeapon then
-		self.inventory:takeItem(currentWeapon)
+		-- self.inventory:takeItem(currentWeapon)
 		if not self.inventory:doesHaveItem(currentWeapon) then
 			self:takeWeapon(currentWeapon)
 		end
@@ -527,6 +528,7 @@ function Player:getFinalDamageAndDeduceArmor(damage)
 	return damage
 end
 
+local grenadeID = 1
 local GRENADE_MAX_DAMAGE = 82.5 --or so it seems
 function Player:handleDamage(attacker, weapon, bodypart, loss)
 	iprint(tostring(Player.getNameOrNil(attacker)).. " attacked " ..self.name)
@@ -537,9 +539,11 @@ function Player:handleDamage(attacker, weapon, bodypart, loss)
 			damage = loss
 			iprint(self.name.. " fell. Damage: " ..damage)
 		elseif weapon == 16 then --grenade
-			damage = getWeaponDamage("Grenade")*(loss/GRENADE_MAX_DAMAGE)
+			-- damage = getWeaponDamage("Grenade")*(loss/GRENADE_MAX_DAMAGE)
 			iprint(tostring(attacker.name).. " blew " ..tostring(self.name)
 				.. " up using grenade. Damage: " ..tostring(damage))
+			self.remote:send("notifyGrenadeDamage", grenadeID, loss)
+			grenadeID = grenadeID + 1
 		elseif Player.isPlayer(attacker) and attacker:getCurrentWeapon()
 		and getWeaponID(attacker:getCurrentWeapon()) == weapon then
 			damage = getWeaponDamage(attacker:getCurrentWeapon())
